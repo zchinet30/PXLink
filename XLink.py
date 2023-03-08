@@ -85,6 +85,20 @@ class GromacsSys:
                             format='%(asctime)s: %(levelname)s: %(message)s')
         logging.info(
             f"Created log file {self.logfile}, initiating GromacsSys class.")
+        # Define the charge changes during amide bond formation.
+        # delta_charge_C: charge change on carboxyl side, in atoms as follows in order:
+        # amide C, amide O, alpha aromatic C, 2 beta aromatic C, 2 gamma aromatic C
+        # delta_charge_N: charge change on amine side, in atoms as follows in order:
+        # amide N, amide H, alpha aromatic C, 2 beta aromatic C, 2 gamma aromatic C
+        # In further work, we need to make this easy to adjust by the user, so that
+        # this program can be used for more types of monomers.
+        self.delta_charge_C = [
+            0.143, -0.043, -0.204, 0.018, 0.018, 0.001, 0.001
+        ]
+        self.delta_charge_N = [
+            0.329, -0.043, 0.089, -0.006, -0.006, -0.002, -0.002
+        ]
+
         self.read_top()
         self.read_gro()
         self.carboxyl = []
@@ -451,7 +465,15 @@ class GromacsSys:
             beta_C_list = self.atoms.loc[
                 (self.atoms['nr'].isin(list(nx.neighbors(self.Graph, alpha_C)))
                  ) & (self.atoms['type'] == 'CG2R61')]['nr'].tolist()
-            charge_list = charge_list + beta_C_list
+            beta_C_neighbors = []
+            for j in beta_C_list:
+                beta_C_neighbors = beta_C_neighbors + self.atoms.loc[
+                    (self.atoms['nr'].isin(list(nx.neighbors(self.Graph, j))))
+                    & (self.atoms['type'] == 'CG2R61')]['nr'].tolist()
+            gamma_C_list = [
+                k for k in beta_C_neighbors if k not in charge_list
+            ]
+            charge_list = charge_list + beta_C_list + gamma_C_list
             self.charge_shift.append(charge_list)
 
         # Mark the amine groups
@@ -468,7 +490,16 @@ class GromacsSys:
             beta_C_list = self.atoms.loc[
                 (self.atoms['nr'].isin(list(nx.neighbors(self.Graph, alpha_C)))
                  ) & (self.atoms['type'] == 'CG2R61')]['nr'].tolist()
-            charge_list = [i, amine_H_list[1], alpha_C] + beta_C_list
+            charge_list = [i, amine_H_list[1], alpha_C]
+            beta_C_neighbors = []
+            for j in beta_C_list:
+                beta_C_neighbors = beta_C_neighbors + self.atoms.loc[
+                    (self.atoms['nr'].isin(list(nx.neighbors(self.Graph, j))))
+                    & (self.atoms['type'] == 'CG2R61')]['nr'].tolist()
+            gamma_C_list = [
+                k for k in beta_C_neighbors if k not in charge_list
+            ]
+            charge_list = charge_list + beta_C_list + gamma_C_list
             self.charge_shift.append(charge_list)
         # Write log
         logging.info(f"Found {len(self.carboxyl)} carboxyl carbon atoms.\n")
@@ -551,7 +582,7 @@ class GromacsSys:
         self.amine = GromacsSys.reindex_list(self.amine, index, 3)
         self.carboxyl = GromacsSys.reindex_list(self.carboxyl, index, 3)
         self.charge_shift = GromacsSys.reindex_list(self.charge_shift, index,
-                                                    5)
+                                                    7)
         self.Graph = nx.relabel_nodes(self.Graph, index)
         logging.info("Atom indices reset.")
 
@@ -814,23 +845,37 @@ class GromacsSys:
         # Change atomic charges.
         charge_group_A = [i for i in self.charge_shift if i[0] == atomA][0]
         charge_group_B = [i for i in self.charge_shift if i[0] == atomB][0]
-        self.atoms.loc[self.atoms['nr'] == charge_group_A[0], 'charge'] = 0.596
-        self.atoms.loc[self.atoms['nr'] == charge_group_A[1],
-                       'charge'] = -0.471
-        self.atoms.loc[self.atoms['nr'] == charge_group_A[2],
-                       'charge'] = -0.134
-        self.atoms.loc[self.atoms['nr'] == charge_group_A[3],
-                       'charge'] += 0.019
-        self.atoms.loc[self.atoms['nr'] == charge_group_A[4],
-                       'charge'] += 0.019
-        self.atoms.loc[self.atoms['nr'] == charge_group_B[0],
-                       'charge'] = -0.508
-        self.atoms.loc[self.atoms['nr'] == charge_group_B[1], 'charge'] = 0.339
-        self.atoms.loc[self.atoms['nr'] == charge_group_B[2], 'charge'] = 0.151
-        self.atoms.loc[self.atoms['nr'] == charge_group_B[3],
-                       'charge'] -= 0.008
-        self.atoms.loc[self.atoms['nr'] == charge_group_B[4],
-                       'charge'] -= 0.008
+        for i in range(len(charge_group_A)):
+            self.atoms.loc[self.atoms['nr'] == charge_group_A[i],
+                           'charge'] += self.delta_charge_C[i]
+        for i in range(len(charge_group_B)):
+            self.atoms.loc[self.atoms['nr'] == charge_group_B[i],
+                           'charge'] += self.delta_charge_N[i]
+        # self.atoms.loc[self.atoms['nr'] == charge_group_A[0], 'charge'] = 0.596
+        # self.atoms.loc[self.atoms['nr'] == charge_group_A[1],
+        #                'charge'] = -0.471
+        # self.atoms.loc[self.atoms['nr'] == charge_group_A[2],
+        #                'charge'] = -0.134
+        # self.atoms.loc[self.atoms['nr'] == charge_group_A[3],
+        #                'charge'] += 0.018
+        # self.atoms.loc[self.atoms['nr'] == charge_group_A[4],
+        #                'charge'] += 0.018
+        # self.atoms.loc[self.atoms['nr'] == charge_group_A[5],
+        #                'charge'] += 0.001
+        # self.atoms.loc[self.atoms['nr'] == charge_group_A[6],
+        #                'charge'] += 0.001
+        # self.atoms.loc[self.atoms['nr'] == charge_group_B[0],
+        #                'charge'] = -0.508
+        # self.atoms.loc[self.atoms['nr'] == charge_group_B[1], 'charge'] = 0.339
+        # self.atoms.loc[self.atoms['nr'] == charge_group_B[2], 'charge'] = 0.151
+        # self.atoms.loc[self.atoms['nr'] == charge_group_B[3],
+        #                'charge'] -= 0.006
+        # self.atoms.loc[self.atoms['nr'] == charge_group_B[4],
+        #                'charge'] -= 0.006
+        # self.atoms.loc[self.atoms['nr'] == charge_group_B[5],
+        #                'charge'] -= 0.002
+        # self.atoms.loc[self.atoms['nr'] == charge_group_B[6],
+        #                'charge'] -= 0.002
         # Delete the amine H and carboxyl OH removed when forming amide bond.
         # Atom indices are changed here.
         remove_list = [i[1:3] for i in self.carboxyl if i[0] == atomA
@@ -892,8 +937,15 @@ class GromacsSys:
         self.angles = self.angles + [x + [5] for x in new_angles]
         self.dihedrals = self.dihedrals + [x + [9] for x in new_dihedrals]
         # Add improper dihedral entry.
-        new_improper = [atomA] + list(nx.neighbors(U,
-                                                   atomA)) + [2, 0, 1004.160]
+        impr_bcd = list(nx.neighbors(U, atomA))
+        # Arrange the latter 3 atoms in the improper dihedral in NG2S1 - CG2R61 - OG2D1 order
+        order = {"NG2S1": 1, "CG2R61": 2, "OG2D1": 3}
+        impr_types = list(
+            self.atoms.loc[self.atoms["nr"].isin(impr_bcd)]["type"].values)
+        impr_nco = [
+            x for y, x in sorted(zip([order[z] for z in impr_types], impr_bcd))
+        ]
+        new_improper = [atomA] + impr_nco + [2, 0, 1004.160]
         self.impropers.append(new_improper)
         self.cl_num = self.cl_num + 1
         # Write log.
@@ -1749,7 +1801,7 @@ class GromacsSys:
         # Begin reducing Z length.
         to_reduce = deltaz
         nstep = 1
-        while(True):
+        while (True):
             if to_reduce > dzstep:
                 to_reduce = to_reduce - dzstep
                 self.box[2] = self.box[2] - dzstep
@@ -1762,5 +1814,7 @@ class GromacsSys:
             if to_reduce < dzstep:
                 break
             nstep = nstep + 1
-        logging.info(f"Reduce Z to ratio {1 - z_reduce_ratio}, by {deltaz} nm, over {nstep} steps.")
+        logging.info(
+            f"Reduce Z to ratio {1 - z_reduce_ratio}, by {deltaz} nm, over {nstep} steps."
+        )
         return deltaz
