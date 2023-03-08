@@ -2,7 +2,9 @@ import XLink as XL
 import logging
 import os
 
+# ========The following section contains parameters to be assigned by user=========
 old_gmx = True  # True if you are using Gromacs 4.x; False if higher versions.
+
 # =====================Run files==============================
 # Designate the files used for the run.
 # You can use files of systems halfway during a crosslinking run, to continue from there.
@@ -16,18 +18,6 @@ bondlog = 'init.ndx'  # Output file that records the length of each bond when cr
 mdp_em = 'minim_frozen.mdp'  # mdp file for energy minimization
 mdp_NVT = 'nvt_frozen.mdp'  # mdp file for NVT MD run
 mdp_cont = 'nvt_frozen_continue.mdp'  # mdp file for continuation MD run (Optional)
-# mdp_cont is used when fail to creat a new bond, and MD run continues from the last one.
-if not mdp_cont:
-    mdp_cont = mdp_NVT
-
-# No autobackup so that script doesn't end because of too many auto backups.
-os.environ['GMX_MAXBACKUP'] = '-1'
-# Loads system information
-Sys = XL.GromacsSys(topfile=top,
-                    grofile=gro,
-                    logfile=log,
-                    ndxfile=ndx,
-                    old_gmx=old_gmx)
 
 # =====================Run control parameters==============================
 # Parameters that control the crosslinking run are defined in this part.
@@ -99,6 +89,21 @@ continue_run = False  # whether the MD simulation next step will be a continuati
 # True when no crosslinking bond is formed in last step.
 dz = 0  # Accumulative delta Z. Only used if do_adjust_Z and adjust_Zmax are both True.
 # This variable is used to count how much Z length has reduced due to adjust_Z, thus reducing zmax.
+
+# =======================Parameter assigning ends here=======================
+
+# mdp_cont is used when fail to creat a new bond, and MD run continues from the last one.
+if not mdp_cont:
+    mdp_cont = mdp_NVT
+
+# No autobackup so that script doesn't end because of too many auto backups.
+os.environ['GMX_MAXBACKUP'] = '-1'
+# Loads system information
+Sys = XL.GromacsSys(topfile=top,
+                    grofile=gro,
+                    logfile=log,
+                    ndxfile=ndx,
+                    old_gmx=old_gmx)
 
 if not zmin:
     zmin = [0] * len(dist)
