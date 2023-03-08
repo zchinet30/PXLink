@@ -44,12 +44,19 @@ max_links = 1000  # Crosslinking ends after this number of bonds are made.
 max_dpc = 0.3  # Crosslinking ends after reaching this degree of crosslinking.
 # dist: Max distance (nm) of carbon - nitrogen pair allowed for crosslinking.
 dist = [0.3, 0.35, 0.4, 0.45, 0.5]
+set_shift = 3  # when failing to find C-N pairs in a row for this many times, use next set of dist, zmin and zmax.
+
+# =====================Parameters about Z limits============================
+# In order to prevent amide bonds from forming across periodic boundary,
+# the script can limit crosslinking in a given Z range zmin <= z <= zmax.
+# Any atoms outside of this range are ignored when trying to find C-N pairs for crosslinking.
+# These are given in lists with the same length as dist, and will be controlled by set_shift just like dist.
+# This will only be used if use_zlim = True
 use_zlim = True  # Whether to use zmin and zmax, to limit crosslinking in a given Z range.
 # zmin: Atoms with Z coordinate below this value (nm) are ignored during crosslinking.
 zmin = [0.3] * len(dist)
 # Zmax: Atoms with Z coordinate above this value (nm) are ignored during crosslinking.
 zmax = [5.7] * len(dist)
-set_shift = 3  # when failing to find C-N pairs in a row for this many times, use next set of dist, zmin and zmax.
 
 # =====================Parameters about NPT run=============================
 # For a large system, you may want to use either NPT or adjusting Z to keep system density stable.
