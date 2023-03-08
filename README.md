@@ -4,6 +4,7 @@ PXLink (Polymer-Cross-Link) is a Python script that uses GROMACS (version 4.6 or
 
 # System requirements:
 
+This script has been tested in Linux. To use it, you need to:
 1. Install GROMACS 4.6 or newer. For details on installation, please refer to GROMACS website: https://www.gromacs.org/
 2. Install Python 3.9 or newer.
 3. Install required Python libraries: Numpy, Pandas, Networkx and Matplotlib
