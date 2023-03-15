@@ -22,6 +22,7 @@ A small-sized demo system with 240 TMA, 360 MPD residues in a 4.48×4.48×6.00 n
     - [] The mdp files needed for Gromacs runs
 2. Modify the running script, designate the files used and assign desired values to the control variables. The default values in example_run_script.py would run crosslinking until its DPC reaches 30%. These values can be changed according to the user’s requirements. Also, if the user wants to change simulation conditions such as time and temperature, please change the corresponding parameters in the mdp files. Refer to the comments in example_run_script.py for more details.
 3. Run the execution script: Python3 example_run_script.py
+
 Note: it is also possible to restart a run from halfway by using top, gro and optionally ndx files generated in a halfway step instead of the initial system files. In that case, you likely need to modify the progress record variables to the values you left off (check the log file for them). 
 
 
