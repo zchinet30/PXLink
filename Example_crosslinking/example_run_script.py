@@ -32,7 +32,7 @@ mdp_cont = 'nvt_frozen_continue.mdp'
 # log: detailed log file to be output
 log = 'run_log.log'
 # bondlog: Output file that records the length of each bond when created. (Optional)
-bondlog = 'init.ndx'
+bondlog = 'bonds.log'
 # NOTE: The script will also output a less detailed log file named (perfix) + "_script.log"
 
 # =====================Run control parameters==============================
