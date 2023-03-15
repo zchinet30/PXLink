@@ -1,23 +1,39 @@
-import PXLink as XL
+import XLink as XL
 import logging
 import os
 
 # ========The following section contains parameters to be assigned by user=========
-old_gmx = True  # True if you are using Gromacs 4.x; False if higher versions.
+# old_gmx: Whether Gromacs 4.x or higher versions are used.
+old_gmx = True
 
 # =====================Run files==============================
-# Designate the files used for the run.
-# You can use files of systems halfway during a crosslinking run, to continue from there.
-# In that case, do change the "Progress record variables" to where you left off.
-gro = 'init.gro'  # gro file of the initial system.
-top = 'init.top'  # top file of the initial system
-log = 'run_log.log'  # log file to be output
-ndx = 'Testrun/run28_init.ndx'  # ndx file of the initial system (Optional)
-bondlog = 'init.ndx'  # Output file that records the length of each bond when created. (Optional)
-# ndx file is used when designating the frozen wall residues using an index file.
-mdp_em = 'minim_frozen.mdp'  # mdp file for energy minimization
-mdp_NVT = 'nvt_frozen.mdp'  # mdp file for NVT MD run
-mdp_cont = 'nvt_frozen_continue.mdp'  # mdp file for continuation MD run (Optional)
+# Designate the input files used for the run.
+# User can use files of systems output halfway during a crosslinking run to continue from there.
+# In that case, do change the "Progress record variables" to where the crosslinking run stopped.
+# gro: gro file of the initial system
+gro = 'init.gro'
+# top: top file of the initial system. Should include the modified force field.
+top = 'init.top'
+# ndx: ndx file of the initial system, used to designate frozen wall residues (Optional)
+ndx = 'Testrun/run28_init.ndx'
+# mdp_em: mdp file for energy minimization
+mdp_em = 'minim_frozen.mdp'
+# mdp_NVT: mdp file for NVT MD run
+mdp_NVT = 'nvt_frozen.mdp'
+# mdp_cont: mdp file for NVT MD run, continuing from failing to find C-N pair (Optional)
+mdp_cont = 'nvt_frozen_continue.mdp'
+# NOTE: Parameters like simulation time and temperature are decided by these mdp files.
+# Also in mdp_NVT, gen-vel should be yes, since these runs are started after PXLink modifying
+# the system to add an amide bond; in mdp_cont, it can be no. If the user want to use
+# the "constriant wall" method to create explicit membrane surfaces, these mdp files should
+# use the freezegrps option to freeze the residues near Z-periodic boundaries.
+
+# Output files:
+# log: detailed log file to be output
+log = 'run_log.log'
+# bondlog: Output file that records the length of each bond when created. (Optional)
+bondlog = 'init.ndx'
+# NOTE: The script will also output a less detailed log file named (perfix) + "_script.log"
 
 # =====================Run control parameters==============================
 # Parameters that control the crosslinking run are defined in this part.
@@ -29,70 +45,107 @@ mdp_cont = 'nvt_frozen_continue.mdp'  # mdp file for continuation MD run (Option
 # less then 0.3 nm and both atoms' Z coordinates are between 0.3 - 5.0 nm. After failing to find such
 # pairs 3 times in a row, the script will move on to find pairs with distance less then 0.35 nm and
 # both atoms' Z coordinates are between 0.3 - 5.0 nm.
-run_label = 'Testrun'  # File name perfix of all files created during the run. Can include path.
-max_links = 1000  # Crosslinking ends after this number of bonds are made.
-max_dpc = 0.3  # Crosslinking ends after reaching this degree of crosslinking.
+# run_label: file name perfix of all files created during the run. Can include path.
+run_label = 'Testrun'
+# max_links: Crosslinking ends after this number of bonds are made.
+max_links = 1000
+# max_dpc: Crosslinking ends after reaching this degree of crosslinking.
+max_dpc = 0.3
 # dist: Max distance (nm) of carbon - nitrogen pair allowed for crosslinking.
 dist = [0.3, 0.35, 0.4, 0.45, 0.5]
-set_shift = 3  # when failing to find C-N pairs in a row for this many times, use next set of dist, zmin and zmax.
+# set_shift: when failing to find C-N pairs in a row for this many times, use next dist value.
+set_shift = 3
 
 # =====================Parameters about Z limits============================
-# In order to prevent amide bonds from forming across periodic boundary,
-# the script can limit crosslinking in a given Z range zmin <= z <= zmax.
+# In order to prevent amide bonds from forming across periodic boundary and produce membrane models
+# with explicit membrane surfaces, the script can limit crosslinking in a "center region" zmin <= z <= zmax.
 # Any atoms outside of this range are ignored when trying to find C-N pairs for crosslinking.
-# These are given in lists with the same length as dist, and will be controlled by set_shift just like dist.
 # This will only be used if use_zlim = True
-use_zlim = True  # Whether to use zmin and zmax, to limit crosslinking in a given Z range.
+# use_zlim: Whether to use zmin and zmax, to limit crosslinking in a given Z range.
+use_zlim = True
 # zmin: Atoms with Z coordinate below this value (nm) are ignored during crosslinking.
 zmin = [0.3] * len(dist)
-# Zmax: Atoms with Z coordinate above this value (nm) are ignored during crosslinking.
+# zmax: Atoms with Z coordinate above this value (nm) are ignored during crosslinking.
 zmax = [5.7] * len(dist)
+# NOTE: zmin and zmax are controlled by set_shift, just like dist.
+# That is to say, dist, zmin and zmax are lists, and when the script fails to find
+# C-N pairs set_shift times in a row, it will use the next values in these lists.
+# For example, if dist = [0.3, 0.4], zmin = [1.0, 0.5], zmax = [3.0, 3.5] and set_shift = 3,
+# PXLink starts with a cutoff distance of 0.3 nm and tries to form amide bonds in 1.0 < z < 3.0
+# region; when it fails to form bonds 3 times in a row, it will move on with a cutoff distance
+# of 0.4 nm, trying to form amide bonds in 0.5 < z < 3.5 region.
+# NOTE: Another method to keep membrane surfaces is by creating "constriant walls" of frozen residues
+# near the Z-periodic boundaries, which blocks movement and interaction of residues. This should be
+# set up in the mdp files. (Use freezegrps option in mdp files to freeze residues.)
 
 # =====================Parameters about NPT run=============================
 # For a large system, you may want to use either NPT or adjusting Z to keep system density stable.
 # This parameter is used if you want to control system density with NPT runs.
-# If used, the script will do an NPT run each time a number of bonds are created.
+# If used, the script will do NPT runs regularly.
 # This will only be used if do_NPT = True
+# do_NPT: Whether to use NPT run to stablize system density.
 do_NPT = False
-NPT_interval = 0  # If not 0, an NPT run will be performed every this many bonds are created.
-NPT_after = 200  # NPT MD will not be done before this many bonds are created.
-# Recommend to set this value high enough (e.g. 50%-60% of total carboxyl numbers), so as
-# to prevent the frozen wall from moving into center of the box in the NPT run.
-mdp_NPT = ''  # mdp file for NPT MD run
+# NPT_interval: an NPT run will be performed every NPT_interval amide bonds are created.
+NPT_interval = 0
+# NPT_after: NPT MD will not be run before NPT_after amide bonds are created.
+NPT_after = 200
+# mdp_NPT: mdp file for NPT MD run.
+mdp_NPT = ''
+# NOTE: It means that when the script forms (NPT_after + NPT_interval * n) amide bonds, where
+# n is any positive integer, it will perform an NPT run to adjust system density.
+# NPT_after is used with the "constriant wall" method, to prevent the frozen wall from moving
+# into center of the box in the NPT run. Recommend to set this value high enough
+# (e.g. 50%-60% of total carboxyl numbers). Also if the "constriant wall" method is used altogether,
+# the "constriant wall" should be temporarily removed during the NPT run i.e., mdp_NPT should not use freezegrps.
 
 # =====================Parameters about adjusting Z=========================
-# Thses parameters are used if you want to control system density by adjusting Z box length.
-# If used, the script will reduce Z length of the period box each time a number of bonds are created,
-# then do a short NVT equilibrium.
-# They will only be used if do_adjust_Z = True
-do_adjust_Z = False  # If True, will call the adjust_Z method after each bond creation to reduce box Z to keep density.
-adjust_Zmax = False  # If this is True, will reduce zmax altogether with Z length of peridic box.
-adjust_interval = 0  # Each time this many bonds are created, Z length will be adjusted and a short NVT run is done.
-adjust_after = 200  # Z length will not be adjusted before this many bonds are created.
-# Recommend to set this value high enough (e.g. 50%-60% of total carboxyl numbers), so as
-# to prevent the frozen wall from moving into center of the box in the following NVT run.
-mdp_adjZ_em = ''  # mdp file for energy minimization after adjusting Z.
-mdp_adjZ_NVT = ''  # mdp file for NVT after adjusting Z.
-# Note that this shall not freeze any of the residues.
-z_freezelayer = 0.4  # Thickness of frozen walls. (Top and bottom walls are assumed to have same thickness)
+# Thses parameters are used if you want to control system density by adjusting Z box length,
+# using a "reduce simulation cell Z-length - energy minimization - NVT run" process automated by subroutine
+# adjust_Z in PXLink. They will only be used if do_adjust_Z = True
+# do_adjust_Z: Whether to use NPT run to stablize system density.
+do_adjust_Z = False
+# adjust_Zmax: Whether to reduce zmax altogether with Z-length of simulation cell (if you also use "center region").
+adjust_Zmax = False
+# adjust_interval: Each time adjust_interval amide bonds are created, Z length will be adjusted.
+adjust_interval = 0
+# adjust_after: Z length will not be adjusted before adjust_after bonds are created.
+adjust_after = 200
+# mdp_adjZ_em: mdp file for energy minimization after adjusting Z.
+mdp_adjZ_em = ''
+# mdp_adjZ_NVT: mdp file for NVT run after adjusting Z.
+mdp_adjZ_NVT = ''
+# Thickness of "constriant wall". This is excluded when calculating density.
+z_freezelayer = 0.4
 # For the purpose of calculating density, only atoms within this range will be used
+# NOTE: adjust_interval and adjust_after works just like NPT_interval and NPT_after
+# in "Parameters about NPT run" section. Also if the "constriant wall" method is used,
+# neither of the mdp files should use freezegrps option, just like mdp_NPT.
 
 # =====================Progress record variables==============================
-# Variables that records how many crosslinking steps have been performed.
-# Need to change to where you left off when continuing a run.
-# Also note that if you continue from a step where NPT or adjusting Z should be run, it might be skipped.
-n_clink = 0  # numbers of amide bonds formed.
-loop = 1  # number of polymerization steps run. (1 + steps run)
-p_set = 0  # script is using dist[p_set], zmin[p_set], zmax[p_set] now.
-no_pair_found = 0  # steps of failing to find linkable C-N pairs in a row.
-continue_run = False  # whether the MD simulation next step will be a continuation of the last.
-# True when no crosslinking bond is formed in last step.
-dz = 0  # Accumulative delta Z. Only used if do_adjust_Z and adjust_Zmax are both True.
-# This variable is used to count how much Z length has reduced due to adjust_Z, thus reducing zmax.
+# Variables that records crosslinking progression. These variables automatically changes
+# along crosslinking process, but if the user wants to continue from a half-way crosslinking run,
+# they need to change these variables to where they left off (which can be found in the scriptlog file).
+# n_clink: numbers of amide bonds formed. Starts from 0.
+n_clink = 0
+# loop: number of polymerization loops run, no matter whether a bond is formed. Starts from 1.
+loop = 1
+# p_set: which value in dist, zmin and zmax the script is using now. i.e., how many times have the
+# script failed to find C-N pairs to form amide bond set_shift times in a row.
+p_set = 0
+# no_pair_found: tracks how many times the script has failed to find C-N pairs to form amide bond in a row.
+# When no_pair_found equals set_shift, the script moves on with next cutoff distance value, and no_pair_found
+# is reset to 0. Starts from 0.
+no_pair_found = 0
+# continue_run: whether the script fail to form an amide bond in the last loop, so that the next MD run should
+# use mdp_cont instead of mdp_NVT. Starts from True.
+continue_run = False
+# dz: how much Z-periodic box length has been reduced due to adjust_Z. This is only needed when both
+# do_adjust_Z and adjust_Zmax are used.
+dz = 0
 
 # =======================Parameter assigning ends here=======================
 
-# mdp_cont is used when fail to creat a new bond, and MD run continues from the last one.
+# mdp_cont is used when failing to creat a new bond, and MD run continues from the last one.
 if not mdp_cont:
     mdp_cont = mdp_NVT
 
@@ -114,7 +167,7 @@ if not len(dist) == len(zmin) == len(zmax):
 
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 logger_script = logging.getLogger('L1')
-handler1 = logging.FileHandler(run_label + '_scriptlog_' + '.log')
+handler1 = logging.FileHandler(run_label + '_scriptlog' + '.log')
 handler1.setFormatter(formatter)
 logger_script.setLevel('INFO')
 logger_script.addHandler(handler1)
@@ -137,9 +190,7 @@ if use_zlim:
         f"Starting arguments:\ndist={dist[p_set]}\nzmin={zmin[p_set]}\nzmax={zmax[p_set]}"
     )
 else:
-    logger_script.info(
-        f"Starting arguments:\ndist={dist[p_set]}\n"
-    )
+    logger_script.info(f"Starting arguments:\ndist={dist[p_set]}\n")
 if bondlog:
     with open(bondlog, 'a') as f:
         f.write('Index of atom A\tIndex of atom B\tA-B distance\t')
@@ -229,7 +280,8 @@ while n_clink <= max_links and p_set < len(dist):
                 if adjust_Zmax:
                     dz = dz + delta
                     z_range = [zmin[p_set], zmax[p_set] - dz]
-                    logger_script.info(f'Reduced zmax by {dz} to {z_range[1]} now.')
+                    logger_script.info(
+                        f'Reduced zmax by {dz} to {z_range[1]} now.')
     else:
         continue_run = True
         if bondlog:
@@ -260,10 +312,10 @@ while n_clink <= max_links and p_set < len(dist):
                 "Continue with adjusted crosslinking distance and Z range.")
             if use_zlim:
                 logger_script.info(
-                    f"dist={dist[p_set]} zmin={z_range[0]} zmax={z_range[1]}\n")
+                    f"dist={dist[p_set]} zmin={z_range[0]} zmax={z_range[1]}\n"
+                )
             else:
-                logger_script.info(
-                    f"dist={dist[p_set]}\n")
+                logger_script.info(f"dist={dist[p_set]}\n")
 
 # Output modified coordinates and topology
 logger_script.info("Outputting system after crosslink run.")
