@@ -4,21 +4,24 @@ PXLink (Polymer-Cross-Link) is a Python script that uses GROMACS (version 4.6 or
 
 # System requirements:
 
-This script has been tested in Linux. To use it, you need to:
-1. Install GROMACS 4.6 or newer. For details on installation, please refer to GROMACS website: https://www.gromacs.org/
-2. Install Python 3.9 or newer.
-3. Install required Python libraries: Numpy, Pandas, Networkx and Matplotlib
+The script is programmed and tested in Linux environment. 
+1.	Install GROMACS 4.6 or newer. For installation, please refer to GROMACS website:  https://www.gromacs.org/
+2.	Install Python 3.9 or newer. 
+3.  Install the required Python packages: Numpy, Pandas, Matplotlib and NetworkX using a Python package manager such as pip or anaconda. For example, it is possible to install these packages with pip using the following command: python3 -m pip install Numpy Pandas NetworkX Matplotlib
+
+
 
 # How to use:
 
+A small-sized demo system with 240 TMA, 360 MPD residues in a 4.48×4.48×6.00 nm3 box is presented in the Example_crosslinking folder on this repository. To use the script, the user needs to:
 1. Place the following files in the same folder:
-    - [] The PXLink script
-    - [] The running script e.g. example_run_script.py
-    - [] The force field you are using (We use a modified CHARMM36 force field. If you want to use other force fields you might need to modify the mark_atoms, add_bond and count_atoms methods in the PXLink script. Make sure this force field is included in the topology file.)
-    - [] The initial system (both top and gro files, and optionally ndx file if you use it)
+    - [] The PXLink script (PXLink.py)
+    - [] The running script (e,g, example_run_script.py)
+    - [] The force field you are using (We use a modified CHARMM36 force field which can found in the Example_crosslinking folder. If you want to use other force fields you might need to modify the mark_atoms, add_bond and count_atoms methods in the PXLink script. Make sure this force field is included in the topology file.)
+    - [] The initial system (files describing the initial system: init.top, init.gro, init.ndx as well as the mdp files: minim_frozen.mdp, nvt_frozen.mdp, nvt_frozen_continue.mdp)
     - [] The mdp files needed for Gromacs runs
-2. Modify the running script, designate the files used and assign desired values to the control variables.
-3. Run the running script using commands like Python3 example_run_script.py
+2. Modify the running script, designate the files used and assign desired values to the control variables. The default values in example_run_script.py would run crosslinking until its DPC reaches 30%. These values can be changed according to the user’s requirements. Also, if the user wants to change simulation conditions such as time and temperature, please change the corresponding parameters in the mdp files. Refer to the comments in example_run_script.py for more details.
+3. Run the execution script: Python3 example_run_script.py
 Note: it is also possible to restart a run from halfway by using top, gro and optionally ndx files generated in a halfway step instead of the initial system files. In that case, you likely need to modify the progress record variables to the values you left off (check the log file for them). 
 
 
