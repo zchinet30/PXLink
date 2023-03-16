@@ -111,8 +111,8 @@ mdp_adjZ_NVT = ''
 # Thickness of the constrained wall, corresponding to the frozen groups.
 z_freezelayer = 0.4
 # NOTE: 1. adjust_interval and adjust_after works just like NPT_interval and NPT_after.
-#       2.  Also if the "constriant wall" method is used, neither of the mdp files should
-#           use the "freezegrps" command, just like mdp_NPT.
+#       2. Also if the "constriant wall" method is used, neither of the mdp files should
+#          use the "freezegrps" command, just like mdp_NPT.
 
 # =====================breakpoint variables==============================
 # Breakpoint variables record the crosslinking process. They will be automatically adjusted
