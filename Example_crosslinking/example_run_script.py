@@ -71,8 +71,8 @@ zmax = [5.7] * len(dist)
 # That is to say, dist, zmin and zmax are lists, and when the script fails to find
 # C-N pairs set_shift times in a row, it will use the next values in these lists.
 # For example, if dist = [0.3, 0.4], zmin = [1.0, 0.5], zmax = [3.0, 3.5] and set_shift = 3,
-# PXLink starts with a cutoff distance of 0.3 nm and tries to form amide bonds in 1.0 < z < 3.0
-# region; when it fails to form bonds 3 times in a row, it will move on with a cutoff distance
+# PXLink starts with a cutoff distance of 0.3 nm and tries to form amide bonds in 1.0 < z < 3.0 region;
+# when it fails to form bonds 3 times in a row, it will move on with a cutoff distance
 # of 0.4 nm, trying to form amide bonds in 0.5 < z < 3.5 region.
 # NOTE: Another method to keep membrane surfaces is by creating "constriant walls" of frozen residues
 # near the Z-periodic boundaries, which blocks movement and interaction of residues. This should be
@@ -215,15 +215,15 @@ while n_clink <= max_links and p_set < len(dist):
     if not continue_run:
         # Run geometry optimization (may not be good in actual run)
         logger_script.info('Running geometry optimization.')
-        Sys.gmx_run('opt', mdp_em, run_label + '_step_' + str(loop) + '_opt')
+        Sys.gmx_run('opt', mdp_em, run_label + '_loop_' + str(loop) + '_opt')
         # Run NPT MD
         logger_script.info('Running NVT MD.')
-        Sys.gmx_run('md', mdp_NVT, run_label + '_step_' + str(loop) + '_nvt')
+        Sys.gmx_run('md', mdp_NVT, run_label + '_loop_' + str(loop) + '_nvt')
     # If not, then no optimization, and NVT run should be a continuation of last run.
     else:
         # Run NPT MD (continuation)
         logger_script.info('Continuing NVT MD.')
-        Sys.gmx_run('md', mdp_cont, run_label + '_step_' + str(loop) + '_nvt')
+        Sys.gmx_run('md', mdp_cont, run_label + '_loop_' + str(loop) + '_nvt')
     # Find carboxyl group and amine group close enough for crosslinking
     pair, pair_dist, across = Sys.CN_dist(r=dist[p_set],
                                           use_zlim=use_zlim,
@@ -236,11 +236,11 @@ while n_clink <= max_links and p_set < len(dist):
         n_clink += 1
         no_pair_found = 0
         Sys.output_contents(
-            new_top=run_label + '_step_' + str(loop) + '_topol.top',
-            new_gro=run_label + '_step_' + str(loop) + '_addbond.gro',
+            new_top=run_label + '_loop_' + str(loop) + '_topol.top',
+            new_gro=run_label + '_loop_' + str(loop) + '_addbond.gro',
             change_files=True)
         if ndx:
-            Sys.output_ndx(run_label + '_step_' + str(loop) + '.ndx')
+            Sys.output_ndx(run_label + '_loop_' + str(loop) + '.ndx')
         logger_script.info("Bond added.")
         dpc = round(Sys.atom_count()["DPC_tri-linked-TMA_portion"], 3)
         if bondlog:
@@ -269,7 +269,7 @@ while n_clink <= max_links and p_set < len(dist):
             if n_clink % adjust_interval == 0 and n_clink > adjust_after:
                 z_freespace = [z_freezelayer, Sys.box[2] - z_freezelayer]
                 zl = z_freespace[1] - z_freespace[0]
-                adj_fn = run_label + '_step_' + str(loop) + '_adjZ_'
+                adj_fn = run_label + '_loop_' + str(loop) + '_adjZ_'
                 delta = Sys.adjust_z(zl=zl,
                                      zrange=z_freespace,
                                      nwater=n_water,
