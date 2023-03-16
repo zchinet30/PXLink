@@ -15,7 +15,7 @@ gro = 'init.gro'
 # top: top file of the initial system. Should include the modified force field.
 top = 'init.top'
 # ndx: ndx file of the initial system, used to designate frozen wall residues (Optional)
-ndx = 'Testrun/run28_init.ndx'
+ndx = 'init.ndx'
 # mdp_em: mdp file for energy minimization
 mdp_em = 'minim_frozen.mdp'
 # mdp_NVT: mdp file for NVT MD run
@@ -62,7 +62,7 @@ set_shift = 3
 # Any atoms outside of this range are ignored when trying to find C-N pairs for crosslinking.
 # This will only be used if use_zlim = True
 # use_zlim: Whether to use zmin and zmax, to limit crosslinking in a given Z range.
-use_zlim = True
+use_zlim = False
 # zmin: Atoms with Z coordinate below this value (nm) are ignored during crosslinking.
 zmin = [0.3] * len(dist)
 # zmax: Atoms with Z coordinate above this value (nm) are ignored during crosslinking.
