@@ -14,8 +14,7 @@ import numpy as np
 # includes all information required in simulation crosslinking as
 # class variables, and all functions performed during simulation
 # crosslinking as class methods.
-# A detailed description of this script and demonstrations of its usage
-# can be found in the following manuscript: Chi Zhang, Guangle Bu,
+# The reference of this work: Chi Zhang, Guangle Bu,
 # Md Symon Jahan Sajib, Lida Meng, Shiying Xu, Size Zheng, Lin Zhang,
 # Tao Wei, PXLink: A simulation program of polymer crosslinking to study
 # of polyamide membrane, Computer Physics Communications, 2023,
