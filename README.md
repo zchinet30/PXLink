@@ -1,6 +1,7 @@
 # PXLink
 
 PXLink (Polymer-Cross-Link) is a Python script that uses GROMACS (version 4.6 or higher) to automatically perfom crosslinking simulation. Currently it can use trimesic acid and m-Phenylenediamine as monomers to generate a crosslinked aromatic polyamide membrane model.
+
 A detailed description of this script and demonstrations of its usage can be found in the following manuscript:
 Chi Zhang, Guangle Bu, Md Symon Jahan Sajib, Lida Meng, Shiying Xu, Size Zheng, Lin Zhang, Tao Wei, PXLink: A simulation program of polymer crosslinking to study of polyamide membrane,  Computer Physics Communications, 2023, doi.org/10.1016/j.cpc.2023.108840
 
